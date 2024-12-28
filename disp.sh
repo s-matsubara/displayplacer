@@ -13,6 +13,11 @@ fi
 
 input=$(displayplacer list | tail -n1)
 
+if [[ -z "$input" ]]; then
+  echo "Failed to retrieve display settings."
+  exit 1
+fi
+
 array=()
 while IFS= read -r line; do
   array+=("${line}")
@@ -20,7 +25,7 @@ done < <(echo "${input}" | rg -oP '"[^"]*"' | sed 's/^"//; s/"$//')
 
 if [ "${#array[@]}" -lt 2 ]; then
   echo "No external display present."
-  exit 0
+  exit 1
 fi
 
 mainInfo=${array[0]}
@@ -32,6 +37,11 @@ mainHeight=$(echo "${mainInfo}" | rg -oP 'res:\d+x\K\d+')
 screenId=$(echo "${screenInfo}" | rg -oP 'id:\K[0-9A-Fa-f-]+')
 screenWidth=$(echo "${screenInfo}" | rg -oP 'res:\K\d+(?=x)')
 screenHeight=$(echo "${screenInfo}" | rg -oP 'res:\d+x\K\d+')
+
+if [[ -z ${mainWidth} || -z ${screenWidth} || -z ${screenId} ]]; then
+  echo "Failed to parse display information."
+  exit 1
+fi
 
 if [[ ${mainWidth} -le ${screenWidth} ]]; then
   width=$(((screenWidth-mainWidth)/2))
